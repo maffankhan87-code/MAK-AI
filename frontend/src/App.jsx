@@ -1,5 +1,6 @@
 import "./App.css";
 import { useState, useEffect } from "react";
+
 import Sidebar from "./components/Sidebar";
 import ChatWindow from "./components/ChatWindow";
 import InputBox from "./components/InputBox";
@@ -7,639 +8,464 @@ import InputBox from "./components/InputBox";
 
 function App() {
 
+const PASSWORD = "mak1998";
 
-  const PASSWORD = "mak1998";
 
+const [unlocked,setUnlocked] = useState(false);
+const [password,setPassword] = useState("");
+const [loginError,setLoginError] = useState("");
 
-  const [unlocked,setUnlocked] = useState(false);
-  const [password,setPassword] = useState("");
-  const [loginError,setLoginError] = useState("");
+const [messages,setMessages] = useState([]);
 
-  const [messages,setMessages] = useState([]);
-  const [chats,setChats] = useState([]);
-  const [currentChat,setCurrentChat] = useState(0);
-  const [typing,setTyping] = useState(false);
-  const [memory,setMemory] = useState([]);
+const [chats,setChats] = useState([]);
 
+const [currentChat,setCurrentChat] = useState(0);
 
+const [typing,setTyping] = useState(false);
 
 
-  // Load chats
 
-  useEffect(()=>{
+useEffect(()=>{
 
+const saved = localStorage.getItem(
+"mak_ai_chats"
+);
 
-    const saved =
-    localStorage.getItem("mak_ai_chats");
 
+if(saved){
 
+setChats(JSON.parse(saved));
 
-    if(saved){
+}
 
-      const data = JSON.parse(saved);
+else{
 
-      setChats(
-        data.length ? data : [
-          {
-            id:Date.now(),
-            name:"New Chat",
-            messages:[]
-          }
-        ]
-      );
+setChats([
+{
+id:Date.now(),
+name:"New Chat",
+messages:[]
+}
+]);
 
+}
 
-    }
-    else{
+},[]);
 
 
-      setChats([
 
-        {
+useEffect(()=>{
 
-          id:Date.now(),
+localStorage.setItem(
+"mak_ai_chats",
+JSON.stringify(chats)
+);
 
-          name:"New Chat",
+},[chats]);
 
-          messages:[]
 
-        }
 
-      ]);
 
 
-    }
+const unlockAI=()=>{
 
 
-  },[]);
+if(password===PASSWORD){
 
+setUnlocked(true);
+setLoginError("");
 
+}
 
+else{
 
+setLoginError("Wrong Password");
+setPassword("");
 
-  // Save chats
+}
 
-  useEffect(()=>{
+};
 
 
-    localStorage.setItem(
 
-      "mak_ai_chats",
 
-      JSON.stringify(chats)
 
-    );
+const newChat=()=>{
 
 
-  },[chats]);
+const newOne={
 
+id:Date.now(),
 
+name:"New Chat",
 
+messages:[]
 
+};
 
 
+setChats(prev=>[
 
+...prev,
 
-  const unlockAI=()=>{
+newOne
 
+]);
 
-    if(password==="mak1998"){
 
-      setUnlocked(true);
+setCurrentChat(chats.length);
 
-      setLoginError("");
+setMessages([]);
 
-    }
 
-    else{
+};
 
-      setLoginError("Wrong Password");
 
-      setPassword("");
 
-    }
 
 
-  };
+const sendMessage=async(text)=>{
 
 
+if(!text.trim()) return;
 
 
 
+const userMsg={
 
+sender:"user",
 
+text:text
 
+};
 
-  const newChat=()=>{
 
 
-    const newOne={
+const updated=[
 
-      id:Date.now(),
+...messages,
 
-      name:"New Chat",
+userMsg
 
-      messages:[]
+];
 
-    };
 
 
+setMessages(updated);
 
-    setChats(prev=>[
 
-      ...prev,
 
-      newOne
+setTyping(true);
 
-    ]);
 
 
-
-    setCurrentChat(chats.length);
-
-
-
-    setMessages([]);
-
-
-
-  };
-
-
-
-
-
-
-
-
-
-  const sendMessage=async(text)=>{
-
-
-    if(!text.trim()) return;
-
-
-
-    const userMsg={
-
-      sender:"user",
-
-      text:text
-
-    };
-
-
-
-    const updated=[
-
-      ...messages,
-
-      userMsg
-
-    ];
-
-
-
-    setMessages(updated);
-
-
-
-
-    setChats(prev=>{
-
-
-      let copy=[...prev];
-
-
-
-      if(!copy[currentChat]){
-
-
-        copy[currentChat]={
-
-          id:Date.now(),
-
-          name:"New Chat",
-
-          messages:[]
-
-        };
-
-
-      }
-
-
-
-
-      copy[currentChat].messages=updated;
-
-
-
-      if(copy[currentChat].name==="New Chat"){
-
-
-        copy[currentChat].name=text.slice(0,20);
-
-
-      }
-
-
-
-      return copy;
-
-
-    });
-
-
-
-
-    setTyping(true);
-
-
-
-
-    try{
-
-
-   const memoryText = memory.join("\n");
-
-
-const prompt = `
-
-You are MAK AI.
-
-Use these saved memories when helpful:
-
-${memoryText}
-
-
-User message:
-
-${text}
-
-`;
-
+try{
 
 
 const response = await fetch(
-`http://192.168.18.111:8000/chat?message=${encodeURIComponent(prompt)}`
+
+`http://192.168.18.111:8000/chat?message=${encodeURIComponent(text)}`
+
 );
 
 
 
-      const data = await response.json();
+const data = await response.json();
 
 
+const reply =
+data.reply ||
+data.error ||
+"No response";
 
-      const reply =
 
-      data.reply ||
 
-      data.error ||
+const aiMsg={
 
-      "No response";
+sender:"ai",
 
+text:reply
 
+};
 
 
-      const aiMsg={
 
-        sender:"ai",
 
-        text:reply
+window.speechSynthesis.cancel();
 
-      };
 
+const speech =
+new SpeechSynthesisUtterance(reply);
 
 
+speech.lang="en-US";
 
-      // Voice reply
 
-      window.speechSynthesis.cancel();
+window.speechSynthesis.speak(
+speech
+);
 
 
-      const speech =
 
-      new SpeechSynthesisUtterance(reply);
+const finalMessages=[
 
+...updated,
 
-      speech.lang="en-US";
+aiMsg
 
+];
 
-      window.speechSynthesis.speak(speech);
 
+setMessages(finalMessages);
 
 
 
 
+setChats(prev=>{
 
-      const finalMessages=[
+let copy=[...prev];
 
-        ...updated,
 
-        aiMsg
+if(copy[currentChat]){
 
-      ];
+copy[currentChat].messages =
+finalMessages;
 
+}
 
 
-      setMessages(finalMessages);
+return copy;
 
+});
 
 
+}
 
+catch(error){
 
-      setChats(prev=>{
 
+setMessages(prev=>[
 
-        let copy=[...prev];
+...prev,
 
+{
 
+sender:"ai",
 
-        if(!copy[currentChat]){
+text:"Cannot connect to backend."
 
+}
 
-          copy[currentChat]={
+]);
 
-            id:Date.now(),
 
-            name:"New Chat",
+}
 
-            messages:[]
 
-          };
 
+setTyping(false);
 
-        }
 
+};const openChat=(index)=>{
 
+setCurrentChat(index);
 
 
-        copy[currentChat].messages=finalMessages;
+setMessages(
+chats[index]?.messages || []
+);
 
+};
 
 
-        return copy;
 
 
 
-      });
+const deleteChat=(index)=>{
 
 
+let copy=[...chats];
 
 
+copy.splice(index,1);
 
-    }
 
-    catch(error){
 
+if(copy.length===0){
 
+copy.push({
 
-      setMessages(prev=>[
+id:Date.now(),
 
-        ...prev,
+name:"New Chat",
 
-        {
+messages:[]
 
-          sender:"ai",
+});
 
-          text:"Cannot connect to backend."
+}
 
-        }
 
-      ]);
 
+setChats(copy);
 
 
-    }
+setCurrentChat(0);
 
 
+setMessages(
+copy[0].messages
+);
 
-    setTyping(false);
 
+};
 
-  };
 
 
 
 
+if(!unlocked){
 
+return(
 
+<div className="login-screen">
 
 
+<div className="login-box">
 
-  const openChat=(index)=>{
 
+<h1>
+🤖 MAK AI
+</h1>
 
-    setCurrentChat(index);
 
+<p>
+Enter Password
+</p>
 
 
-    setMessages(
 
-      chats[index]?.messages || []
+<input
 
-    );
+type="password"
 
+placeholder="Password"
 
-  };
+value={password}
 
+onChange={
+e=>setPassword(e.target.value)
+}
 
 
+onKeyDown={
+e=>{
 
+if(e.key==="Enter"){
 
+unlockAI();
 
+}
 
+}
 
+}
 
-  const deleteChat=(index)=>{
 
+/>
 
-    let copy=[...chats];
 
 
-    copy.splice(index,1);
+<button onClick={unlockAI}>
 
+Unlock
 
+</button>
 
-    if(copy.length===0){
 
 
-      copy.push({
 
-        id:Date.now(),
+{
 
-        name:"New Chat",
+loginError &&
 
-        messages:[]
+<span className="error">
 
-      });
+{loginError}
 
+</span>
 
-    }
+}
 
 
 
-    setChats(copy);
+</div>
 
 
-    setCurrentChat(0);
+</div>
 
 
-    setMessages(
+);
 
-      copy[0].messages
+}
 
-    );
 
 
-  };
 
+return(
 
+<div className="app">
 
 
 
+<Sidebar
 
+chats={chats}
 
+newChat={newChat}
 
+openChat={openChat}
 
-  if(!unlocked){
+deleteChat={deleteChat}
 
+currentChat={currentChat}
 
-    return(
+/>
 
-      <div className="login-screen">
 
 
-        <div className="login-box">
 
+<div className="main">
 
-          <h1>🤖 MAK AI</h1>
 
 
-          <p>
-            Enter Password
-          </p>
+<ChatWindow
 
+messages={messages}
 
+typing={typing}
 
-          <input
+/>
 
-          type="password"
 
-          placeholder="Password"
 
-          value={password}
+<InputBox
 
-          onChange={
-            e=>setPassword(e.target.value)
-          }
+onSend={sendMessage}
 
+/>
 
-          onKeyDown={
-            e=>{
 
-              if(e.key==="Enter")
-              unlockAI();
 
-            }
+</div>
 
-          }
 
-          />
 
+</div>
 
 
-          <button onClick={unlockAI}>
+);
 
-            Unlock
-
-          </button>
-
-
-
-
-          {
-
-            loginError &&
-
-            <span className="error">
-
-              {loginError}
-
-            </span>
-
-          }
-
-
-
-        </div>
-
-
-      </div>
-
-    );
-
-
-  }
-
-
-
-
-
-
-
-
-  return(
-
-
-    <div className="app">
-
-
-      <Sidebar
-
-      chats={chats}
-
-      newChat={newChat}
-
-      openChat={openChat}
-
-      deleteChat={deleteChat}
-
-      currentChat={currentChat}
-
-      />
-
-
-
-      <div className="main">
-
-
-        <ChatWindow
-
-        messages={messages}
-
-        typing={typing}
-
-        />
-
-
-
-        <InputBox
-
-        onSend={sendMessage}
-
-        />
-
-
-      </div>
-
-
-
-    </div>
-
-
-  );
 
 
 }
