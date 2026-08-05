@@ -1,109 +1,124 @@
-import { useState } from "react";
 import "./App.css";
-
-type Message = {
-  sender: "user" | "ai";
-  text: string;
-};
+import { useState } from "react";
 
 function App() {
+  const [messages, setMessages] = useState([
+    {
+      role: "assistant",
+      text: "👋 Welcome to MAK AI.\nHow can I help you today?",
+    },
+  ]);
+
   const [input, setInput] = useState("");
-  const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
 
-  async function sendMessage() {
+  const API_URL = "http://192.168.18.111:8000";
+
+  const sendMessage = async () => {
     if (!input.trim()) return;
 
-    const userText = input;
+    const userInput = input;
 
     setMessages((prev) => [
       ...prev,
-      { sender: "user", text: userText }
+      {
+        role: "user",
+        text: userInput,
+      },
     ]);
 
     setInput("");
     setLoading(true);
 
     try {
-      const res = await fetch(
-        `http://127.0.0.1:8000/chat?message=${encodeURIComponent(userText)}`
+      const response = await fetch(
+        `${API_URL}/chat?message=${encodeURIComponent(userInput)}`
       );
 
-      const data = await res.json();
+      const data = await response.json();
 
       setMessages((prev) => [
         ...prev,
         {
-          sender: "ai",
-          text: data.reply || "No response"
-        }
+          role: "assistant",
+          text: data.reply,
+        },
       ]);
-
-    } catch (error) {
+    } catch (err) {
       setMessages((prev) => [
         ...prev,
         {
-          sender: "ai",
-          text: "Backend connection failed"
-        }
+          role: "assistant",
+          text: "❌ Cannot connect to backend.",
+        },
       ]);
     }
 
     setLoading(false);
-  }
-
+  };
 
   return (
     <div className="app">
 
-      <div className="top">
-        <h1>MAK AI</h1>
-        <p>Your Intelligent AI Assistant</p>
-      </div>
+      <aside className="sidebar">
+        <h2>🤖 MAK AI</h2>
 
+        <button>+ New Chat</button>
+        <button>History</button>
+        <button>Settings</button>
 
-      <div className="chat">
+        <div className="bottom">
+          Version 1.0
+        </div>
+      </aside>
 
-        {messages.map((msg, index) => (
-          <div
-            key={index}
-            className={
-              msg.sender === "user"
-                ? "user-message"
-                : "ai-message"
-            }
-          >
-            {msg.text}
-          </div>
-        ))}
+      <main className="main">
 
-        {loading && (
-          <div className="ai-message">
-            Thinking...
-          </div>
-        )}
+        <header className="header">
+          <h1>MAK AI</h1>
+          <p>Your Personal AI Assistant</p>
+        </header>
 
-      </div>
+        <section className="chat">
 
+          {messages.map((msg, index) => (
+            <div
+              key={index}
+              className={msg.role === "user" ? "message user" : "message ai"}
+            >
+              {msg.text}
+            </div>
+          ))}
 
-      <div className="bottom">
+          {loading && (
+            <div className="message ai">
+              ⏳ MAK AI is thinking...
+            </div>
+          )}
 
-        <input
-          value={input}
-          placeholder="Ask MAK AI..."
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              sendMessage();
-            }
-          }}
-        />
+        </section>
 
-        <button onClick={sendMessage}>
-          Send
-        </button>
+        <div className="inputArea">
 
-      </div>
+          <input
+            type="text"
+            placeholder="Ask anything..."
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                sendMessage();
+              }
+            }}
+          />
+
+          <button onClick={sendMessage}>
+            Send
+          </button>
+
+        </div>
+
+      </main>
 
     </div>
   );
