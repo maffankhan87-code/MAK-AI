@@ -1,4 +1,3 @@
-import Memory from "./components/Memory";
 import "./App.css";
 import { useState, useEffect } from "react";
 import Sidebar from "./components/Sidebar";
@@ -283,9 +282,7 @@ ${text}
 
 
 const response = await fetch(
-
 `http://192.168.18.111:8000/chat?message=${encodeURIComponent(prompt)}`
-
 );
 
 
@@ -616,13 +613,7 @@ const response = await fetch(
 
 
       <div className="main">
-      <Memory
 
-memory={memory}
-
-setMemory={setMemory}
-
-/>
 
         <ChatWindow
 
