@@ -1,0 +1,12 @@
+fastapi
+uvicorn
+python-dotenv
+google-genai
+python-multipart
+aiofiles
+edge-tts
+Pillow
+python-docx
+pypdf
+markdown
+httpx

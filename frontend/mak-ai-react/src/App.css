@@ -1,0 +1,89 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #0f172a;
+  font-family: Arial, sans-serif;
+}
+
+
+.app {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  color: white;
+}
+
+
+.top {
+  text-align: center;
+  padding: 25px;
+  background: #111827;
+}
+
+
+.top h1 {
+  font-size: 42px;
+  margin: 0;
+}
+
+
+.top p {
+  color: #94a3b8;
+}
+
+
+.chat {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+
+.user-message,
+.ai-message {
+  padding: 14px;
+  margin: 12px;
+  border-radius: 12px;
+  max-width: 70%;
+}
+
+
+.user-message {
+  margin-left: auto;
+  background: #2563eb;
+}
+
+
+.ai-message {
+  background: #1e293b;
+}
+
+
+.bottom {
+  display: flex;
+  padding: 20px;
+  background: #111827;
+}
+
+
+.bottom input {
+  flex: 1;
+  padding: 15px;
+  font-size: 16px;
+  border-radius: 10px;
+  border: none;
+}
+
+
+.bottom button {
+  margin-left: 10px;
+  padding: 15px 25px;
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+}
