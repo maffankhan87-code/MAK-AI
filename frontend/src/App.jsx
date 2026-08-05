@@ -10,43 +10,42 @@ function App() {
 
 const PASSWORD = "mak1998";
 
-
 const [unlocked,setUnlocked] = useState(false);
 const [password,setPassword] = useState("");
 const [loginError,setLoginError] = useState("");
 
 const [messages,setMessages] = useState([]);
-
 const [chats,setChats] = useState([]);
-
 const [currentChat,setCurrentChat] = useState(0);
-
 const [typing,setTyping] = useState(false);
 
 
 
 useEffect(()=>{
 
-const saved = localStorage.getItem(
-"mak_ai_chats"
-);
-
+const saved = localStorage.getItem("mak_ai_chats");
 
 if(saved){
 
-setChats(JSON.parse(saved));
+const data = JSON.parse(saved);
+
+setChats(data);
+
+setMessages(
+data[0]?.messages || []
+);
 
 }
 
 else{
 
-setChats([
-{
+const firstChat={
 id:Date.now(),
 name:"New Chat",
 messages:[]
-}
-]);
+};
+
+setChats([firstChat]);
 
 }
 
@@ -56,10 +55,14 @@ messages:[]
 
 useEffect(()=>{
 
+if(chats.length){
+
 localStorage.setItem(
 "mak_ai_chats",
 JSON.stringify(chats)
 );
+
+}
 
 },[chats]);
 
@@ -68,7 +71,6 @@ JSON.stringify(chats)
 
 
 const unlockAI=()=>{
-
 
 if(password===PASSWORD){
 
@@ -96,27 +98,21 @@ const newChat=()=>{
 const newOne={
 
 id:Date.now(),
-
 name:"New Chat",
-
 messages:[]
 
 };
 
 
 setChats(prev=>[
-
 ...prev,
-
 newOne
-
 ]);
 
 
 setCurrentChat(chats.length);
 
 setMessages([]);
-
 
 };
 
@@ -130,30 +126,23 @@ const sendMessage=async(text)=>{
 if(!text.trim()) return;
 
 
-
 const userMsg={
 
 sender:"user",
-
 text:text
 
 };
 
 
-
 const updated=[
 
 ...messages,
-
 userMsg
 
 ];
 
 
-
 setMessages(updated);
-
-
 
 setTyping(true);
 
@@ -173,6 +162,7 @@ const response = await fetch(
 const data = await response.json();
 
 
+
 const reply =
 data.reply ||
 data.error ||
@@ -183,41 +173,22 @@ data.error ||
 const aiMsg={
 
 sender:"ai",
-
 text:reply
 
 };
 
 
 
-
-window.speechSynthesis.cancel();
-
-
-const speech =
-new SpeechSynthesisUtterance(reply);
-
-
-speech.lang="en-US";
-
-
-window.speechSynthesis.speak(
-speech
-);
-
-
-
 const finalMessages=[
 
 ...updated,
-
 aiMsg
 
 ];
 
 
-setMessages(finalMessages);
 
+setMessages(finalMessages);
 
 
 
@@ -236,7 +207,28 @@ finalMessages;
 
 return copy;
 
+
 });
+
+
+
+
+// Voice
+
+if(window.speechSynthesis){
+
+window.speechSynthesis.cancel();
+
+
+const speech =
+new SpeechSynthesisUtterance(reply);
+
+
+speech.lang="en-US";
+
+window.speechSynthesis.speak(speech);
+
+}
 
 
 }
@@ -251,7 +243,6 @@ setMessages(prev=>[
 {
 
 sender:"ai",
-
 text:"Cannot connect to backend."
 
 }
@@ -266,16 +257,28 @@ text:"Cannot connect to backend."
 setTyping(false);
 
 
-};const openChat=(index)=>{
+};
+
+
+
+
+
+
+const openChat=(index)=>{
+
 
 setCurrentChat(index);
 
 
 setMessages(
+
 chats[index]?.messages || []
+
 );
 
+
 };
+
 
 
 
@@ -293,15 +296,15 @@ copy.splice(index,1);
 
 if(copy.length===0){
 
+
 copy.push({
 
 id:Date.now(),
-
 name:"New Chat",
-
 messages:[]
 
 });
+
 
 }
 
@@ -324,32 +327,25 @@ copy[0].messages
 
 
 
+
 if(!unlocked){
 
-return(
 
-<div className="login-screen">
+return (
 
-
-<div className="login-box">
+<div className="login">
 
 
 <h1>
-🤖 MAK AI
+MAK AI
 </h1>
-
-
-<p>
-Enter Password
-</p>
-
 
 
 <input
 
 type="password"
 
-placeholder="Password"
+placeholder="Enter Password"
 
 value={password}
 
@@ -357,23 +353,14 @@ onChange={
 e=>setPassword(e.target.value)
 }
 
-
 onKeyDown={
 e=>{
-
-if(e.key==="Enter"){
-
+if(e.key==="Enter")
 unlockAI();
-
 }
-
 }
-
-}
-
 
 />
-
 
 
 <button onClick={unlockAI}>
@@ -384,38 +371,34 @@ Unlock
 
 
 
-
 {
 
 loginError &&
 
-<span className="error">
+<p className="error">
 
 {loginError}
 
-</span>
+</p>
 
 }
 
 
 
 </div>
-
-
-</div>
-
 
 );
 
+
 }
 
 
 
 
-return(
+
+return (
 
 <div className="app">
-
 
 
 <Sidebar
@@ -431,11 +414,6 @@ deleteChat={deleteChat}
 currentChat={currentChat}
 
 />
-
-
-
-
-<div className="main">
 
 
 
@@ -456,20 +434,12 @@ onSend={sendMessage}
 />
 
 
-
 </div>
-
-
-
-</div>
-
 
 );
 
 
-
 }
-
 
 
 export default App;
